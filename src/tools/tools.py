@@ -46,7 +46,12 @@ def execute_tests():
     command = command.decode('utf-8')
     result = result.decode('utf-8')
 
-    LOGGER.info(f"Tests executed. Result: {result}")
+    # ToDo: Replace with other test runners. This is specific to jest.
+    if result.startswith("PASS"):
+        LOGGER.info("Tests passed.")
+        return "Tests passed."
+
+    LOGGER.warning(f"Tests failed. Output: {result}")
     return result
 
 @tool

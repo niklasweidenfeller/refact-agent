@@ -30,6 +30,8 @@ class ReActOutput(BaseModel):
     action: str = Field(description="The tool to use.")
     tools_input: dict = Field(description="The input to the action.")
     observation: str = Field(description="Your observation.")
+    plan: list[str] = Field(description="Your long-term plan. Should be a list of steps. Consider, how you want the code to look like in the future.")
+    problems: list[str] = Field(description="Things in the code that could be improved. If you see multiple problems, track them here for further reference.")
 
 parser = PydanticOutputParser(pydantic_object=ReActOutput)
 
@@ -51,29 +53,27 @@ def build_tool_info():
 
 SYSTEM_PROMPT = SystemMessage(
     content=(
-        "You are a specialist software developer."
-        "Your job is to automatically refactor existing codebases."
-        "You work in a loop of thought, action, and observation."
+        "You are a professional software developer."
+        "Your job is to refactor the existing codebases."
+        "You work in a loop of thought, action, and observation and plan."
         "You can use a variety of tools to assist you."
         "The next tool you use will depend on previous observations."
     #     "Normally, you use the following refactoring techniques: "
     # ) + ", ".join(tools.get_refactoring_techniques.invoke([])) + (
         "\n"
         "\n"
-        "You can use the following tools to assist you: "
+        "The following tools are available:"
     ) + build_tool_info() + (
-        "Only make incremental changes to the codebase."
+        "Only make very incremental changes to the codebase. "
         "After each change, run the tests to ensure that the code still works."
         # "You should only use the refactoring techniques in the catalog. Apply them one at a time."
 
         "Respond with the tool you would like to use."
-        "You don't have to worry about writing tests. Rest assured that tests already exist."
+        "You don't have to worry about writing tests, as they are already provided."
 
         "AFTER EACH CHANGE, RUN THE TESTS TO ENSURE THAT THE CODE STILL WORKS."
         "IF THE CODE WORKS, COMMIT THE CHANGES TO THE CODEBASE."
         "IF THE CODE DOES NOT WORK, REVERT THE CHANGES AND TRY AGAIN."
 
-        "Remember to respond in the correct format."
-        "Provide your thought, action, tools input, and observation the following format: "
     ) + parser.get_format_instructions()
 )
