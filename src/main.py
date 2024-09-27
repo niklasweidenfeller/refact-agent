@@ -89,10 +89,10 @@ class CodeRefactoringAgent:
                 self._history.append(HumanMessage(content=msg))
 
             # if we've committed changes, we want to clean the history    
-            if response.action == "commit_changes":
-                self._history = [get_system_message()]
-                self._add_to_history(response)
-                self._logger.info("Committed changes. Cleaning history.")
+            # if response.action == "commit_changes":
+            #     self._history = [get_system_message()]
+            #     self._add_to_history(response)
+            #     self._logger.info("Committed changes. Cleaning history.")
 
             print("========================================")
 
