@@ -39,6 +39,7 @@ class ReActOutput(BaseModel):
         Pay attention for anti-patterns, code smells, and other issues. Also pay attention to the code quality and testability.
         Each issue should be broken down as much as possible.
         Try to understand why the issue is there and what the best way to address it is.
+        Update this list as you go.
         """
     )
 
