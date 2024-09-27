@@ -66,6 +66,7 @@ SYSTEM_PROMPT = SystemMessage(
     ) + build_tool_info() + (
         "Only make very incremental changes to the codebase. "
         "After each change, run the tests to ensure that the code still works."
+        "You can also revisit files you have already worked on."
         # "You should only use the refactoring techniques in the catalog. Apply them one at a time."
 
         "Respond with the tool you would like to use."
