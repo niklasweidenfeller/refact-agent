@@ -52,6 +52,89 @@ def build_tool_info():
     return json.dumps(tools_info, indent=4)
 
 
+
+REFACTORINGS_FOWLER = """
+Change...
+    ... Function Declaration
+    ... Reference to Value
+    ... Value to Reference
+Collapse Hierarchy
+Combine...
+    ... Functions into Class
+    ... Functions into Transform
+Consolidate Conditional Expression
+Decompose Conditional
+Encapsulate...
+    ... Collection
+    ... Record
+    ... Variable
+Extract...
+    ... Class
+    ... Function
+    ... Superclass
+    ... Variable
+Hide Delegate
+Inline...
+    ... Class
+    ... Function
+    ... Variable
+Introduce...
+    ... Assertion
+    ... Parameter Object
+    ... Special Case
+Move...
+    ... Field
+    ... Function
+    ... Statements into Function
+    ... Statements to Callers
+Parameterize Function
+Preserve Whole Object
+Pull Up...
+    ... Constructor Body
+    ... Field
+    ... Method
+Push Down...
+    ... Field
+    ... Method
+Remove...
+    ... Dead Code
+    ... Flag Argument
+    ... Middle Man
+    ... Setting Method
+    ... Subclass
+    ... Field
+    ... Variable
+Replace...
+    ... Command with Function
+    ... Conditional with Polymorphism
+    ... Constructor with Factory Method
+    ... Control Flag with Break
+    ... Derived Variable with Query
+    ... Error Code with Exception
+    ... Exception with Precheck
+    ... Function with Command
+    ... Inline Code with Function Call
+    ... Loop with Pipeline
+    ... Magic Literal
+    ... Nested Conditional with Guard Clauses
+    ... Parameter with Query
+    ... Primitive with Object
+    ... Query with Parameter
+    ... Subclass with Delegate
+    ... Superclass with Delegate
+    ... Temp with Query
+    ... Type Code with Subclasses
+Return Modified Value
+Separate Query from Modifier
+Slide Statements
+Split
+    ... Loop
+    ... Phase
+    ... Variable
+Substitute Algorithm
+"""
+
+
 def get_system_message():
 
     tool_info = build_tool_info()
@@ -71,12 +154,22 @@ def get_system_message():
     Then, proceed with the next change.
     You can also revisit files you have already worked on.
 
+    Pay attention to following things:
+    - The code should be readable and maintainable.
+    - The code should be well commented.
+    - Use as many built-in functions as possible.
+    - Avoid over-complicating the code.
+
     Respond with the tool you would like to use.
     You don't have to worry about writing tests, as they are already provided.
 
     AFTER EACH CHANGE, RUN THE TESTS TO ENSURE THAT THE CODE STILL WORKS.
     IF THE CODE WORKS, COMMIT THE CHANGES TO THE CODEBASE.
     IF THE CODE DOES NOT WORK, REVERT THE CHANGES AND TRY AGAIN.
+
+    Here's a list of frequently used refactoring steps by Martin Fowler.
+    Follow only these basic steps for now:
+    {REFACTORINGS_FOWLER}
 
     {format_instructions}
     """
