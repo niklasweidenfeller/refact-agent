@@ -7,6 +7,7 @@ import logging
 
 LOGGER = logging.getLogger("Tools")
 
+from . import git_tools
 
 PROJECT_ROOT = os.path.abspath(os.path.join(__file__, "..", "..", ".."))
 
@@ -66,14 +67,12 @@ def commit_changes(files: list[str], commit_message: str):
     for filepath in files:
         fullpath = os.path.join(PROJECT_ROOT, SAMPLE_PROJECT_FOLDER, filepath)
 
-        check_file_has_changes = subprocess.check_output(["git", "status", "--porcelain", fullpath])
-        if check_file_has_changes.decode("utf-8").strip() == "":
+        if not git_tools.has_file_changes(fullpath):
             LOGGER.warning(f"Trying to commit unchanged file {filepath}, but no changes found.")
             return "No changes to commit."
+        git_tools.stage_file(fullpath)
 
-        subprocess.check_output(["git", "add", fullpath])
-    subprocess.check_output(["git", "commit", "-m", f"[ReFAct]: {commit_message}"])
-
+    git_tools.commit(f"[ReFAct]: {commit_message}")
     LOGGER.info(f"Changes to {filepath} committed.")
     return "Changes committed."
 
@@ -82,8 +81,7 @@ def undo_changes(files: list[str]):
     """ Undo the changes to a specific file. """
     for filepath in files:
         fullpath = os.path.join(PROJECT_ROOT, SAMPLE_PROJECT_FOLDER, filepath)
-        subprocess.check_output(["git", "checkout", fullpath])
-
+        git_tools.undo_file(fullpath)
     return "Changes undone."
 
 @tool
@@ -110,6 +108,7 @@ def get_refactoring_techniques():
 @tool
 def stop(changes_summary: str):
     """ Call this tool when you see no further refactoring Opportunities. """
+    git_tools.merge("main", f"ReFAct: {changes_summary}", squash=True)
     LOGGER.info(f"Refactoring finished. Summary: {changes_summary}")
     exit(0)
 

@@ -9,7 +9,11 @@ from prompts import get_system_message, ReActOutput, parser, get_tool_by_name
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from tools.tools import PROJECT_ROOT
 
+from tools.git_tools import checkout
+
 import logging
+
+import uuid
 
 logging.basicConfig(level=logging.INFO)
 
@@ -52,6 +56,9 @@ class CodeRefactoringAgent:
 
 
     def run(self):
+        
+        self._working_branch = "ReFAct-" + str(uuid.uuid4())
+        checkout(self._working_branch, create=True)
 
         while True:
             """
