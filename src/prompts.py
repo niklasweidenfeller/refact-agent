@@ -15,6 +15,7 @@ tool_registry = [
     tools.commit_changes,
     tools.undo_changes,
     tools.stop,
+    tools.get_refactoring_tipps,
 ]
 
 LOGGER = logging.getLogger("Tools")
@@ -30,8 +31,15 @@ class ReActOutput(BaseModel):
     action: str = Field(description="The tool to use.")
     tools_input: dict = Field(description="The input to the action.")
     observation: str = Field(description="Your observation.")
-    plan: list[str] = Field(description="Your long-term plan. Should be a list of steps. Consider, how you want the code to look like in the future.")
-    problems: list[str] = Field(description="Things in the code that could be improved. If you see multiple problems, track them here for further reference.")
+    # plan: list[str] = Field(description="Your long-term plan. Should be a list of steps. Consider, how you want the code to look like in the future.")
+    issues: list[str] = Field(
+        description="""
+        A very precise list of all issues and code smells that you can find in the codebase.
+        Pay attention for anti-patterns, code smells, and other issues. Also pay attention to the code quality and testability.
+        Each issue should be broken down as much as possible.
+        Try to understand why the issue is there and what the best way to address it is.
+        """
+    )
 
 parser = PydanticOutputParser(pydantic_object=ReActOutput)
 
@@ -143,22 +151,23 @@ def get_system_message():
     msg = f"""
     You are a professional software developer.
     Your job is to refactor the existing codebases.
-    You work in a loop of thought, action, and observation and plan.
+    You work in a loop of thought, action, and observation.
+
+    Your task is to make a precise list of issues in the codebase.
+    You can update this list as you go.
+    For each issue, you will use a refactoring technique to address it.
     You can use a variety of tools to assist you.
-    The next tool you use will depend on previous observations.
+    Only make very incremental changes to the codebase, which touch as few lines as possible.
+    If the changes seem overwhelming, start with the most obvious ones, such as renaming variables or functions, inverting conditions, or extracting functions.
+    After each issue, run the tests to ensure that the code still works, and commit the changes to the codebase.
+
+    If a test failed, come up with a new plan to address the issue.
+
+    Then, proceed with the next issue.
+    You can also revisit files you have already worked on.
 
     The following tools are available:
     {tool_info}
-    Only make very incremental changes to the codebase, which touch as few files as possible.
-    After each change, run the tests to ensure that the code still works.
-    Then, proceed with the next change.
-    You can also revisit files you have already worked on.
-
-    Pay attention to following things:
-    - The code should be readable and maintainable.
-    - The code should be well commented.
-    - Use as many built-in functions as possible.
-    - Avoid over-complicating the code.
 
     Respond with the tool you would like to use.
     You don't have to worry about writing tests, as they are already provided.
@@ -166,11 +175,7 @@ def get_system_message():
     AFTER EACH CHANGE, RUN THE TESTS TO ENSURE THAT THE CODE STILL WORKS.
     IF THE CODE WORKS, COMMIT THE CHANGES TO THE CODEBASE.
     IF THE CODE DOES NOT WORK, REVERT THE CHANGES AND TRY AGAIN.
-    FOCUS ON ONE OF THE PROBLEMS AT A TIME. AFTER EVERY STEP, REVIEW THE CODE AND CHECK FOR FURTHER IMPROVEMENTS.
-
-    Here's a list of frequently used refactoring steps by Martin Fowler.
-    Follow only these basic steps for now:
-    {REFACTORINGS_FOWLER}
+    FOCUS ON ONE ISSUE AT A TIME. BREAK EVERYTHING DOWN INTO SMALL STEPS.
 
     {format_instructions}
     """

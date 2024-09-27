@@ -32,11 +32,11 @@ class CodeRefactoringAgent:
         self._logger.info(f"Initialized with project {project}")
 
     def _log_agent_message(self, response: ReActOutput):
-        self._logger.info("Plan:\n" + prettify_list(response.plan))
+        # self._logger.info("Plan:\n" + prettify_list(response.plan))
         self._logger.info(f"Thought: {response.thought}")
         self._logger.info(f"Action: {response.action}")
         self._logger.info(f"Observation: {response.observation}")
-        self._logger.info(f"Problems:\n" + prettify_list(response.problems))
+        self._logger.info(f"Issues:\n" + prettify_list(response.issues))
 
     def _add_to_history(self, response: ReActOutput):
         # we don't want to store the full response in the history to keep the context window small
@@ -45,8 +45,9 @@ class CodeRefactoringAgent:
             "action": response.action,
             "tools_input": response.tools_input,
             "observation": response.observation,
-            "plan": response.plan,
-            "problems": response.problems
+            # "plan": response.plan,
+            "issues": response.issues
+            # "problems": response.problems
         }, indent=4)))
 
 
