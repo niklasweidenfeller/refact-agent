@@ -1,0 +1,40 @@
+
+import os
+
+def get_project_relevant_file_endings(project_root_files):
+    if "package.json" in project_root_files:
+        return ["js", "jsx", "ts", "tsx"]
+    if "requirements.txt" in project_root_files:
+        return ["py"]
+    if "pom.xml" in project_root_files:
+        return ["java"]
+
+    return [""]
+
+def parse_gitignore(gitignore_file):
+    try:
+        with open(gitignore_file, "r") as f:
+            return f.readlines()
+    except FileNotFoundError:
+        return []
+
+def in_directory(file, directory):
+    #make both absolute    
+    directory = os.path.join(os.path.realpath(directory), '')
+    file = os.path.realpath(file)
+
+    #return true, if the common prefix of both is equal to directory
+    #e.g. /a/b/c/d.rst and directory is /a/b, the common prefix is /a/b
+    return os.path.commonprefix([file, directory]) == directory
+
+def get_all_code_files(project_root_dir, code_dir):
+    relevant_file_endings = get_project_relevant_file_endings(os.listdir(os.path.abspath(project_root_dir)))
+
+    code_files = []
+    for root, dirs, files in os.walk(os.path.join(project_root_dir, code_dir)):
+        
+        for file in files:
+            if file.split(".")[-1] in relevant_file_endings:
+                code_files.append(os.path.join(root, file))
+    return code_files
+
