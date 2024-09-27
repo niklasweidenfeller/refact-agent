@@ -49,7 +49,6 @@ class CodeRefactoringAgent:
             "problems": response.problems
         }, indent=4)))
 
-        
 
     def run(self):
 
@@ -88,6 +87,13 @@ class CodeRefactoringAgent:
                 msg = f"Tool {response.action} could not be executed: {str(e)}"
                 self._logger.warning(msg)
                 self._history.append(HumanMessage(content=msg))
+
+            # if we've committed changes, we want to clean the history    
+            if response.action == "commit_changes":
+                self._history = [get_system_message()]
+                self._add_to_history(response)
+                self._logger.info("Committed changes. Cleaning history.")
+
             print("========================================")
 
 if __name__ == "__main__":
