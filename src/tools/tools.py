@@ -68,7 +68,7 @@ def commit_changes(filepath: str, commit_message: str):
         return "No changes to commit."
 
     subprocess.check_output(["git", "add", fullpath])
-    subprocess.check_output(["git", "commit", "-m", f"ReFAct: {commit_message}"])
+    subprocess.check_output(["git", "commit", "-m", f"[ReFAct]: {commit_message}"])
 
     LOGGER.info(f"Changes to {filepath} committed.")
     return "Changes committed."

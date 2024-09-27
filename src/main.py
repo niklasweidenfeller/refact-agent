@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from llm import get_ollama_llm, get_gpt_llm
-from prompts import SYSTEM_PROMPT, ReActOutput, parser, get_tool_by_name
+from prompts import get_system_message, ReActOutput, parser, get_tool_by_name
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from tools.tools import PROJECT_ROOT
 
@@ -26,7 +26,7 @@ class CodeRefactoringAgent:
         self._logger = logging.getLogger("CodeRefactoringAgent")
 
         self._project = project
-        self._history = [SYSTEM_PROMPT]
+        self._history = [get_system_message()]
         self._model = get_gpt_llm()
 
         self._logger.info(f"Initialized with project {project}")

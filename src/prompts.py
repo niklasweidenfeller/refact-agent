@@ -51,30 +51,34 @@ def build_tool_info():
         })
     return json.dumps(tools_info, indent=4)
 
-SYSTEM_PROMPT = SystemMessage(
-    content=(
-        "You are a professional software developer."
-        "Your job is to refactor the existing codebases."
-        "You work in a loop of thought, action, and observation and plan."
-        "You can use a variety of tools to assist you."
-        "The next tool you use will depend on previous observations."
-    #     "Normally, you use the following refactoring techniques: "
-    # ) + ", ".join(tools.get_refactoring_techniques.invoke([])) + (
-        "\n"
-        "\n"
-        "The following tools are available:"
-    ) + build_tool_info() + (
-        "Only make very incremental changes to the codebase. "
-        "After each change, run the tests to ensure that the code still works."
-        "You can also revisit files you have already worked on."
-        # "You should only use the refactoring techniques in the catalog. Apply them one at a time."
 
-        "Respond with the tool you would like to use."
-        "You don't have to worry about writing tests, as they are already provided."
+def get_system_message():
 
-        "AFTER EACH CHANGE, RUN THE TESTS TO ENSURE THAT THE CODE STILL WORKS."
-        "IF THE CODE WORKS, COMMIT THE CHANGES TO THE CODEBASE."
-        "IF THE CODE DOES NOT WORK, REVERT THE CHANGES AND TRY AGAIN."
+    tool_info = build_tool_info()
+    format_instructions = parser.get_format_instructions()
 
-    ) + parser.get_format_instructions()
-)
+    msg = f"""
+    You are a professional software developer.
+    Your job is to refactor the existing codebases.
+    You work in a loop of thought, action, and observation and plan.
+    You can use a variety of tools to assist you.
+    The next tool you use will depend on previous observations.
+
+    The following tools are available:
+    {tool_info}
+    Only make very incremental changes to the codebase, which touch as few files as possible.
+    After each change, run the tests to ensure that the code still works.
+    Then, proceed with the next change.
+    You can also revisit files you have already worked on.
+
+    Respond with the tool you would like to use.
+    You don't have to worry about writing tests, as they are already provided.
+
+    AFTER EACH CHANGE, RUN THE TESTS TO ENSURE THAT THE CODE STILL WORKS.
+    IF THE CODE WORKS, COMMIT THE CHANGES TO THE CODEBASE.
+    IF THE CODE DOES NOT WORK, REVERT THE CHANGES AND TRY AGAIN.
+
+    {format_instructions}
+    """
+
+    return SystemMessage(content=msg)
