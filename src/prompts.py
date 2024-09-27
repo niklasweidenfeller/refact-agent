@@ -190,6 +190,8 @@ def get_system_message():
     
     IF YOU'RE STUCK, E.G. IF TESTS FAIL MULTIPLE TIMES IN A ROW, OR IF YOU NEED FURTHER INPUT,
     ASK YOUR BUDDY.
+    
+    ALWAYS RESPOND WITH THE ENTIRE FILE CONTENT, NOT JUST SNIPPETS.
 
     {format_instructions}
     """

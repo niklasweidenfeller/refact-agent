@@ -56,7 +56,7 @@ def execute_tests():
     # ToDo: Replace with other test runners. This is specific to jest.
     if result.startswith("PASS"):
         LOGGER.info("Tests passed.")
-        return "Tests passed."
+        return "Tests passed. Code may be committed."
 
     LOGGER.warning(f"Tests failed. Output: {result}")
     return result
