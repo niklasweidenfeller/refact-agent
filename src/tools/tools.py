@@ -60,6 +60,7 @@ def commit_changes(files: list[str], commit_message: str):
     """
     Commit the changes to the codebase.
     Only commit after running the tests.
+    Please make the commit message as descriptive as possible.
     """
 
     for filepath in files:

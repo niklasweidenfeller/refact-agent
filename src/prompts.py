@@ -15,7 +15,7 @@ tool_registry = [
     tools.commit_changes,
     tools.undo_changes,
     tools.stop,
-    tools.get_refactoring_tipps,
+    # tools.get_refactoring_tipps,
 ]
 
 LOGGER = logging.getLogger("Tools")
@@ -158,7 +158,13 @@ def get_system_message():
     For each issue, you will use a refactoring technique to address it.
     You can use a variety of tools to assist you.
     Only make very incremental changes to the codebase, which touch as few lines as possible.
-    If the changes seem overwhelming, start with the most obvious ones, such as renaming variables or functions, inverting conditions, or extracting functions.
+    If the changes seem overwhelming, start with the most obvious ones:
+        - renaming variables or functions
+        - inverting boolean conditions
+        - extracting functions
+        - enabling early returns
+        - checking for dead code
+        - checking for duplicated code
     After each issue, run the tests to ensure that the code still works, and commit the changes to the codebase.
 
     If a test failed, come up with a new plan to address the issue.
@@ -176,6 +182,11 @@ def get_system_message():
     IF THE CODE WORKS, COMMIT THE CHANGES TO THE CODEBASE.
     IF THE CODE DOES NOT WORK, REVERT THE CHANGES AND TRY AGAIN.
     FOCUS ON ONE ISSUE AT A TIME. BREAK EVERYTHING DOWN INTO SMALL STEPS.
+
+    ONCE YOU ARE DONE WITH THE LIST OF ISSUES, TRY TO RE-CHECK THE CODEBASE FOR ANY ADDITIONAL ISSUES.
+    IF YOU CAN'T FIND ANY, YOU CAN STOP.
+    
+    IF TESTS FAIL MULTIPLE TIMES IN A ROW, RECONSIDER THE ISSUES AND TRY SOMETHING ELSE.
 
     {format_instructions}
     """
