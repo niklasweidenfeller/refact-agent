@@ -15,6 +15,7 @@ tool_registry = [
     tools.commit_changes,
     tools.undo_changes,
     tools.stop,
+    tools.ask_buddy,
     # tools.get_refactoring_tipps,
 ]
 
@@ -186,7 +187,8 @@ def get_system_message():
     ONCE YOU ARE DONE WITH THE LIST OF ISSUES, TRY TO RE-CHECK THE CODEBASE FOR ANY ADDITIONAL ISSUES.
     IF YOU CAN'T FIND ANY, YOU CAN STOP.
     
-    IF TESTS FAIL MULTIPLE TIMES IN A ROW, RECONSIDER THE ISSUES AND TRY SOMETHING ELSE.
+    IF YOU'RE STUCK, E.G. IF TESTS FAIL MULTIPLE TIMES IN A ROW, OR IF YOU NEED FURTHER INPUT,
+    ASK YOUR BUDDY.
 
     {format_instructions}
     """

@@ -1,9 +1,14 @@
 import os
-from .internals import get_all_code_files
-from langchain.tools import BaseTool, StructuredTool, tool
-import json
 import subprocess
 import logging
+
+from langchain.tools import tool
+from langchain_core.messages import HumanMessage
+from typing import List, Dict
+
+from .internals import get_all_code_files
+from llm import get_gpt_llm
+
 
 LOGGER = logging.getLogger("Tools")
 
@@ -112,6 +117,30 @@ def stop(changes_summary: str):
     LOGGER.info(f"Refactoring finished. Summary: {changes_summary}")
     exit(0)
 
+@tool
+def ask_buddy(code: str) -> str | List[str | Dict]:
+    """
+    Ask your buddy for feedback on the current code.
+    A second pair of eyes can help you spot issues you might have missed
+    or provide you with new ideas for refactoring.
+    """
+
+    LOGGER.info("Requesting buddy feedback.")
+    llm = get_gpt_llm()
+
+    input_message = HumanMessage(
+        content=f"""
+        Please review the following code.
+        Which areas could be improved?
+        What should I look out for when refactoring?
+
+        {code}
+        """
+    )
+
+    llm_response = llm.invoke([input_message])
+    LOGGER.info(f"Buddy feedback: {llm_response.content}")
+    return llm_response.content
 
 @tool
 def get_refactoring_tipps():
