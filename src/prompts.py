@@ -1,30 +1,11 @@
-import os, json, logging
+import json, logging
+from pydantic import BaseModel, Field
 
 from langchain_core.messages import SystemMessage
 from langchain.output_parsers import PydanticOutputParser
 
-from pydantic import BaseModel, Field
-
-from tools import tools
-
-tool_registry = [
-    tools.browse_files,
-    tools.open_file,
-    tools.execute_tests,
-    tools.overwrite_code,
-    tools.commit_changes,
-    tools.undo_changes,
-    tools.stop,
-    tools.ask_buddy,
-    # tools.get_refactoring_tipps,
-]
 
 LOGGER = logging.getLogger("Tools")
-
-
-PROJECT_ROOT = os.path.abspath(os.path.join(__file__, "..", "..", ".."))
-
-SAMPLE_PROJECT_FOLDER = "sample_project"
 
 
 class ReActOutput(BaseModel):
@@ -35,23 +16,16 @@ class ReActOutput(BaseModel):
     # plan: list[str] = Field(description="Your long-term plan. Should be a list of steps. Consider, how you want the code to look like in the future.")
     issues: list[str] = Field(
         description="""
-        A very precise list of all issues and code smells that you can find in the codebase.
-        Pay attention for anti-patterns, code smells, and other issues. Also pay attention to the code quality and testability.
-        Each issue should be broken down as much as possible.
-        Try to understand why the issue is there and what the best way to address it is.
-        Update this list as you go.
+        A list of all issues and code smells that you can find in the codebase. Pay attention for anti-patterns,
+        code smells, and more. Also pay attention to the code quality and testability. Each issue should be broken
+        down, when possible.
+        Explain why the issue is there and what the best way to address it is. Update this list as you go.
         """
     )
 
 parser = PydanticOutputParser(pydantic_object=ReActOutput)
 
-def get_tool_by_name(name):
-    for tool in tool_registry:
-        if tool.name == name:
-            return tool
-    return None
-
-def build_tool_info():
+def build_tool_info(tool_registry):
     tools_info = []
     for tool in tool_registry:
         tools_info.append({
@@ -63,91 +37,9 @@ def build_tool_info():
 
 
 
-REFACTORINGS_FOWLER = """
-Change...
-    ... Function Declaration
-    ... Reference to Value
-    ... Value to Reference
-Collapse Hierarchy
-Combine...
-    ... Functions into Class
-    ... Functions into Transform
-Consolidate Conditional Expression
-Decompose Conditional
-Encapsulate...
-    ... Collection
-    ... Record
-    ... Variable
-Extract...
-    ... Class
-    ... Function
-    ... Superclass
-    ... Variable
-Hide Delegate
-Inline...
-    ... Class
-    ... Function
-    ... Variable
-Introduce...
-    ... Assertion
-    ... Parameter Object
-    ... Special Case
-Move...
-    ... Field
-    ... Function
-    ... Statements into Function
-    ... Statements to Callers
-Parameterize Function
-Preserve Whole Object
-Pull Up...
-    ... Constructor Body
-    ... Field
-    ... Method
-Push Down...
-    ... Field
-    ... Method
-Remove...
-    ... Dead Code
-    ... Flag Argument
-    ... Middle Man
-    ... Setting Method
-    ... Subclass
-    ... Field
-    ... Variable
-Replace...
-    ... Command with Function
-    ... Conditional with Polymorphism
-    ... Constructor with Factory Method
-    ... Control Flag with Break
-    ... Derived Variable with Query
-    ... Error Code with Exception
-    ... Exception with Precheck
-    ... Function with Command
-    ... Inline Code with Function Call
-    ... Loop with Pipeline
-    ... Magic Literal
-    ... Nested Conditional with Guard Clauses
-    ... Parameter with Query
-    ... Primitive with Object
-    ... Query with Parameter
-    ... Subclass with Delegate
-    ... Superclass with Delegate
-    ... Temp with Query
-    ... Type Code with Subclasses
-Return Modified Value
-Separate Query from Modifier
-Slide Statements
-Split
-    ... Loop
-    ... Phase
-    ... Variable
-Substitute Algorithm
-"""
+def get_system_message(tool_registry):
 
-
-def get_system_message():
-
-    tool_info = build_tool_info()
+    tool_info = build_tool_info(tool_registry)
     format_instructions = parser.get_format_instructions()
 
     msg = f"""
@@ -189,7 +81,7 @@ def get_system_message():
     IF YOU CAN'T FIND ANY, YOU CAN STOP.
     
     IF YOU'RE STUCK, E.G. IF TESTS FAIL MULTIPLE TIMES IN A ROW, OR IF YOU NEED FURTHER INPUT,
-    ASK YOUR BUDDY.
+    TRY A ALTERNATIVE APPROACH.
     
     ALWAYS RESPOND WITH THE ENTIRE FILE CONTENT, NOT JUST SNIPPETS.
 
