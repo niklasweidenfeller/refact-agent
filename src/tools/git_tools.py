@@ -35,3 +35,7 @@ def merge(from_branch: str, into_branch: str, squash: bool = True):
         subprocess.check_output(["git", "merge", from_branch])
 
     commit(f"[ReFAct]: Merge {from_branch} into {into_branch}")
+
+def get_current_branch() -> str:
+    """Get the current branch name."""
+    return subprocess.check_output(["git", "branch", "--show-current"]).decode("utf-8").strip()

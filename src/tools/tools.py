@@ -9,6 +9,7 @@ from typing import List, Dict
 from .internals import get_all_code_files
 from llm import get_gpt_llm
 
+import lizard
 
 LOGGER = logging.getLogger("Tools")
 
