@@ -1,8 +1,8 @@
 from . import tools
 
-def register_tools(repo_path):
+def register_tools(repo_path, source_code_dir):
     
-    tools_dict = tools.get_tools(repo_path)
+    tools_dict = tools.get_tools(repo_path, source_code_dir)
     
     tool_registry = [
         tools_dict['browse_files'],

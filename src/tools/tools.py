@@ -16,12 +16,12 @@ LOGGER = logging.getLogger("Tools")
 from . import git_tools
 
 
-def get_tools(sample_project_path: str):
+def get_tools(sample_project_path: str, source_code_dir: str):
 
     @tool
     def browse_files():
         """ Get an overview of the source files in the code project. """
-        all_files = get_all_code_files(sample_project_path, "src")
+        all_files = get_all_code_files(sample_project_path, source_code_dir)
         
         files_w_o_full_path = [os.path.relpath(file, sample_project_path) for file in all_files]    
         
@@ -36,14 +36,8 @@ def get_tools(sample_project_path: str):
             content = f.read()
         return content
 
-    @tool
-    def execute_tests():
-        """
-        Run test cases to ensure that the refactored code still works.
-        Use this tool after each change to the codebase.
-        If a test failed, try to understand why it failed and how to avoid it in the future.
-        """
-        
+    def node_js_test_runner():
+        """ Run the test cases for a Node.js project. """
         bash_cmd = [f'cd {sample_project_path} && npm run test']
         process = subprocess.Popen(bash_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         command, result = process.communicate()
@@ -58,6 +52,35 @@ def get_tools(sample_project_path: str):
 
         LOGGER.warning(f"Tests failed. Output: {result}")
         return result
+
+    def python_test_runner():
+        bash_cmd = [f'cd {sample_project_path} && python tennis_unittest.py']
+        process = subprocess.Popen(bash_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        command, result = process.communicate()
+        command = command.decode("utf-8")
+        result = result.decode("utf-8")
+
+        lines = result.splitlines()
+        lines = [line for line in lines if line]
+        
+        is_ok = lines[-1].startswith("OK")
+
+        if is_ok:
+            LOGGER.info("Tests passed.")
+            return "Tests passed. Code may be committed."
+        return result
+
+    @tool
+    def execute_tests():
+        """
+        Run test cases to ensure that the refactored code still works.
+        Use this tool after each change to the codebase.
+        If a test failed, try to understand why it failed and how to avoid it in the future.
+        """
+        all_code_files = get_all_code_files(sample_project_path, source_code_dir)
+        if any(file.endswith(".py") for file in all_code_files):
+            return python_test_runner()
+        return node_js_test_runner()
 
     @tool
     def commit_changes(files: list[str], commit_message: str):

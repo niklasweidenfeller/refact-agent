@@ -17,10 +17,10 @@ MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", 20))
 
 class CodeRefactoringAgent:
 
-    def __init__(self, project):
+    def __init__(self, project, directory):
         self._logger = logging.getLogger("CodeRefactoringAgent")
 
-        self._tool_registry = register_tools(project)
+        self._tool_registry = register_tools(project, directory)
         self._project = project
         self._history = [get_system_message(self._tool_registry)]
         self._model = get_gpt_llm()

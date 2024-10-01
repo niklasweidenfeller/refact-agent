@@ -12,10 +12,11 @@ if __name__ == "__main__":
     logger.info("Application started.")
 
     # the application that we want to refactor is passed as an command line argument
-    if len(sys.argv) < 2:
-        logger.error("Usage: python main.py <repository_to_refactor>")
+    if len(sys.argv) < 3:
+        logger.error("Usage: python main.py <repository_to_refactor> <relative_dir_to_refactor>")
         sys.exit(1)
 
     project = os.path.abspath(sys.argv[1])
-    refact = CodeRefactoringAgent(project)
+    directory = sys.argv[2]
+    refact = CodeRefactoringAgent(project, directory)
     refact.run()

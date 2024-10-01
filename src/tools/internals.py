@@ -30,8 +30,13 @@ def in_directory(file, directory):
 def get_all_code_files(project_root_dir, code_dir):
     relevant_file_endings = get_project_relevant_file_endings(os.listdir(os.path.abspath(project_root_dir)))
 
+    if code_dir:
+        dir_to_walk = os.path.join(project_root_dir, code_dir)
+    else:
+        dir_to_walk = project_root_dir
+
     code_files = []
-    for root, dirs, files in os.walk(os.path.join(project_root_dir, code_dir)):
+    for root, dirs, files in os.walk(dir_to_walk):
         
         for file in files:
             if file.split(".")[-1] in relevant_file_endings:
