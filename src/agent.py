@@ -46,7 +46,6 @@ class CodeRefactoringAgent:
             # "problems": response.problems
         }, indent=4)))
 
-
     def _get_tool_by_name(self, name):
         for tool in self._tool_registry:
             if tool.name == name:

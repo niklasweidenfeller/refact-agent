@@ -70,6 +70,51 @@ def get_tools(sample_project_path: str, source_code_dir: str):
             return True, "Tests passed. Code may be committed."
         return False, result
 
+    def java_test_runner():
+        def parse_mvn_output(output_string):
+            parsed_command = output_string.split("\n")
+
+            if any("[INFO] BUILD SUCCESS" in s for s in parsed_command):
+                return True, "[INFO] SUCCESS"
+
+            error_lines = [s for s in parsed_command if s.startswith("[ERROR]")]
+            if len(error_lines) > 0:
+                return False, "\n".join(error_lines)
+            return False, "[ERROR] FAILURE"
+
+        # clean the build directory
+        
+        bash_cmd = [f'cd {sample_project_path} && rf -rf target']
+        try:
+            subprocess.run(bash_cmd)
+        except:
+            # the target directory might not exist yet
+            LOGGER.info("Target directory not found. Skipping deletion.")
+            pass
+
+        # compile the code
+        bash_cmd = [f'cd {sample_project_path} && mvn compile']
+        process = subprocess.Popen(bash_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        command, _ = process.communicate()
+        compilation_output = command.decode("utf-8")
+
+        # verify the compilation        
+        compilation_success, detail = parse_mvn_output(compilation_output)
+        if not compilation_success:
+            return False, detail
+
+        # exec unit tests
+        bash_cmd = [f'cd {sample_project_path} && mvn test']
+        process = subprocess.Popen(bash_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        command, _ = process.communicate()
+        test_output = command.decode("utf-8")
+        test_success, detail = parse_mvn_output(test_output)
+        if not test_success:
+            return False, detail
+
+        # comilation and test successfull
+        return True, "[INFO] COMPILATION & TEST SUCCESS"
+
     @tool
     def commit_changes(files: list[str], commit_message: str):
         """
@@ -106,6 +151,8 @@ def get_tools(sample_project_path: str, source_code_dir: str):
             all_code_files = get_all_code_files(sample_project_path, source_code_dir)
             if any(file.endswith(".py") for file in all_code_files):
                 return python_test_runner()
+            if any(file.endswith(".java") for file in all_code_files):
+                return java_test_runner()
             return node_js_test_runner()
 
         def undo_changes(files: list[str]):
@@ -124,10 +171,14 @@ def get_tools(sample_project_path: str, source_code_dir: str):
 
         success, text = execute_tests()
         if success:
-            return "Tests passed. Changes may be committed."
+            msg = "Tests passed. Please commit your changes."
+            LOGGER.info(msg)
+            return msg
 
         undo_result = undo_changes([filepath])
-        return f"Tests failed. {undo_result} Output: {text}."
+        msg = f"Refactoring failed. {undo_result} Output: {text}."
+        LOGGER.warning(msg)
+        return msg
 
     @tool
     def get_refactoring_techniques():
