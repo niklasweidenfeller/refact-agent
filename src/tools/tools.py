@@ -48,10 +48,10 @@ def get_tools(sample_project_path: str, source_code_dir: str):
         # ToDo: Replace with other test runners. This is specific to jest.
         if result.startswith("PASS"):
             LOGGER.info("Tests passed.")
-            return "Tests passed. Code may be committed."
+            return True, "Tests passed. Code may be committed."
 
         LOGGER.warning(f"Tests failed. Output: {result}")
-        return result
+        return False, result
 
     def python_test_runner():
         bash_cmd = [f'cd {sample_project_path} && python tennis_unittest.py']
@@ -67,20 +67,8 @@ def get_tools(sample_project_path: str, source_code_dir: str):
 
         if is_ok:
             LOGGER.info("Tests passed.")
-            return "Tests passed. Code may be committed."
-        return result
-
-    @tool
-    def execute_tests():
-        """
-        Run test cases to ensure that the refactored code still works.
-        Use this tool after each change to the codebase.
-        If a test failed, try to understand why it failed and how to avoid it in the future.
-        """
-        all_code_files = get_all_code_files(sample_project_path, source_code_dir)
-        if any(file.endswith(".py") for file in all_code_files):
-            return python_test_runner()
-        return node_js_test_runner()
+            return True, "Tests passed. Code may be committed."
+        return False, result
 
     @tool
     def commit_changes(files: list[str], commit_message: str):
@@ -103,25 +91,43 @@ def get_tools(sample_project_path: str, source_code_dir: str):
         return "Changes committed."
 
     @tool
-    def undo_changes(files: list[str]):
-        """ Undo the changes to a specific file. """
-        for filepath in files:
-            fullpath = os.path.join(sample_project_path, filepath)
-            git_tools.undo_file(fullpath)
-        return "Changes undone."
-
-    @tool
     def overwrite_code(filepath: str, content: str):
         """
         Overwrite the content of a specific file.
         You must provide the full content of the file.
         """
+
+        def execute_tests():
+            """
+            Run test cases to ensure that the refactored code still works.
+            Use this tool after each change to the codebase.
+            If a test failed, try to understand why it failed and how to avoid it in the future.
+            """
+            all_code_files = get_all_code_files(sample_project_path, source_code_dir)
+            if any(file.endswith(".py") for file in all_code_files):
+                return python_test_runner()
+            return node_js_test_runner()
+
+        def undo_changes(files: list[str]):
+            """ Undo the changes to a specific file. """
+            for filepath in files:
+                fullpath = os.path.join(sample_project_path, filepath)
+                git_tools.undo_file(fullpath)
+            return "Changes have been reverted."
+
+        
         fullpath = os.path.join(sample_project_path, filepath)
         with open(fullpath, "w") as f:
             f.write(content)
 
         LOGGER.info(f"File {filepath} overwritten.")
-        return "File overwritten."
+
+        success, text = execute_tests()
+        if success:
+            return "Tests passed. Changes may be committed."
+
+        undo_result = undo_changes([filepath])
+        return f"Tests failed. {undo_result} Output: {text}."
 
     @tool
     def get_refactoring_techniques():
@@ -201,9 +207,9 @@ def get_tools(sample_project_path: str, source_code_dir: str):
     return {
         "browse_files": browse_files,
         "open_file": open_file,
-        "execute_tests": execute_tests,
+        # "execute_tests": execute_tests,
         "commit_changes": commit_changes,
-        "undo_changes": undo_changes,
+        # "undo_changes": undo_changes,
         "overwrite_code": overwrite_code,
         "get_refactoring_techniques": get_refactoring_techniques,
         "stop": stop,
