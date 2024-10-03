@@ -54,21 +54,20 @@ def get_tools(sample_project_path: str, source_code_dir: str):
         return False, result
 
     def python_test_runner():
-        bash_cmd = [f'cd {sample_project_path} && python tennis_unittest.py']
+        bash_cmd = [f"cd {sample_project_path} && pytest | sed -e 's/\x1b\[[0-9;]*m//g'"]
         process = subprocess.Popen(bash_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        command, result = process.communicate()
+        command, _ = process.communicate()
         command = command.decode("utf-8")
-        result = result.decode("utf-8")
 
-        lines = result.splitlines()
+        lines = command.splitlines()
         lines = [line for line in lines if line]
         
-        is_ok = lines[-1].startswith("OK")
-
-        if is_ok:
-            LOGGER.info("Tests passed.")
-            return True, "Tests passed. Code may be committed."
-        return False, result
+        result_line = lines[-1]
+        filed_lines = [line for line in lines if line.startswith("FAILED")]
+        
+        if len(filed_lines) > 0:
+            return False, result_line + "\n".join(filed_lines)
+        return True, "Tests passed. Code may be committed."
 
     def java_test_runner():
         def parse_mvn_output(output_string):
