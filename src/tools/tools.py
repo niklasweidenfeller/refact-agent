@@ -63,10 +63,10 @@ def get_tools(sample_project_path: str, source_code_dir: str):
         lines = [line for line in lines if line]
         
         result_line = lines[-1]
-        filed_lines = [line for line in lines if line.startswith("FAILED")]
-        
-        if len(filed_lines) > 0:
-            return False, result_line + "\n".join(filed_lines)
+        erroneous_lines = [line for line in lines if line.startswith("FAILED") or line.startswith("ERROR")]
+
+        if len(erroneous_lines) > 0:
+            return False, result_line + "\n".join(erroneous_lines)
         return True, "Tests passed. Code may be committed."
 
     def java_test_runner():
