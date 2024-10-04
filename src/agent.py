@@ -13,6 +13,8 @@ from tools.registry import register_tools
 from utils import prettify_list
 
 MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", 20))
+MAX_CONSECUTIVE_ERRORS = int(os.getenv("MAX_CONSECUTIVE_ERRORS", 3))
+CONTEXT_LIMIT = int(os.getenv("CONTEXT_LIMIT", 15_000))
 
 ENCODER = tiktoken.encoding_for_model("gpt-4o")
 
@@ -28,6 +30,8 @@ class CodeRefactoringAgent:
         self._model = get_gpt_llm()
 
         self._logger.info(f"Initialized with project {project}")
+        
+        self._consecutive_error_count = 0
 
     def _log_agent_message(self, response: ReActOutput):
         # self._logger.info("Plan:\n" + prettify_list(response.plan))
@@ -59,7 +63,26 @@ class CodeRefactoringAgent:
         for message in self._history:
             msg_tokens = ENCODER.encode(message.content)
             total_token_ct += len(msg_tokens)
-        self._logger.info(f"Sending a estimated amount of tokens: {total_token_ct}")
+        return total_token_ct
+
+    def _clip_message_history(self, token_limit):
+        current_token_ct = self._estimate_tokens()
+        if current_token_ct <= token_limit:
+            self._logger.info(f"Current token count {current_token_ct} is below limit {token_limit}.")
+            return
+
+        all_messages = self._history.copy()
+        self._history = [all_messages.pop(0)]
+        while self._estimate_tokens() <= token_limit:
+            if len(all_messages) == 0:
+                break
+            most_recent_remaining_message = all_messages.pop()
+            if len(self._history) == 1:
+                self._history.append(most_recent_remaining_message)
+            else:
+                # message needs to be inserted after the first message
+                self._history.insert(1, most_recent_remaining_message)
+        self._logger.info(f"Clipped message history to {self._estimate_tokens()} tokens (limit: {token_limit}).")
 
     def run(self):
 
@@ -73,12 +96,19 @@ class CodeRefactoringAgent:
             as the agent should terminate by calling the "stop" tool.
             """
 
-            self._estimate_tokens()
+            self._clip_message_history(token_limit=CONTEXT_LIMIT)
+
+
+            # if the agent seems stuck, we'll try to reset the state
+            if self._consecutive_error_count >= MAX_CONSECUTIVE_ERRORS:
+                self._consecutive_error_count = 0
+                self._history = [get_system_message(self._tool_registry)]
             response = self._model.invoke(self._history)
 
             try:
                 response = parser.parse(response.content)
             except Exception:
+                self._consecutive_error_count += 1
                 msg = "Output could not be parsed. Make sure to respond in the correct format."
                 self._logger.warning(msg)
                 self._history.append(response)
@@ -90,6 +120,7 @@ class CodeRefactoringAgent:
 
             tool = self._get_tool_by_name(response.action)
             if tool is None:
+                self._consecutive_error_count += 1
                 msg = f"Tool {response.action} not found."
                 self._logger.warning(msg)
                 self._history.append(HumanMessage(content=f"{msg} Available tools: {build_tool_info(self._tool_registry)}"))
@@ -105,6 +136,7 @@ class CodeRefactoringAgent:
                     num_commits += 1
 
             except Exception as e:
+                self._consecutive_error_count += 1
                 msg = f"Tool {response.action} could not be executed: {str(e)}"
                 self._logger.warning(msg)
                 self._history.append(HumanMessage(content=msg))
