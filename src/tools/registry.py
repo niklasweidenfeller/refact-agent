@@ -14,7 +14,7 @@ def register_tools(repo_path, source_code_dir):
         tools_dict['stop'],
         # tools_dict['ask_buddy'],
         # tools_dict['get_refactoring_tipps'],
-        # tools_dict['cyclomatic_complexity_tool']
+        tools_dict['cyclomatic_complexity_tool']
     ]
 
     return tool_registry

@@ -140,6 +140,9 @@ def get_tools(sample_project_path: str, source_code_dir: str):
         You must provide the full content of the file.
         """
 
+        if "\"\.\"" in content:
+            content = content.replace("\"\.\"", "\"\\\\.\"")
+
         def execute_tests():
             """
             Run test cases to ensure that the refactored code still works.
