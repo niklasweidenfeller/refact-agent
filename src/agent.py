@@ -3,16 +3,18 @@ import logging
 import uuid
 import os
 
-from llm import get_gpt_llm
-from prompts import get_system_message, ReActOutput, parser
 from langchain_core.messages import AIMessage, HumanMessage
+import tiktoken
 
+from llm import get_gpt_llm
+from prompts import get_system_message, ReActOutput, parser, build_tool_info
 from tools.git_tools import git_checkout
 from tools.registry import register_tools
 from utils import prettify_list
 
 MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", 20))
 
+ENCODER = tiktoken.encoding_for_model("gpt-4o")
 
 
 class CodeRefactoringAgent:
@@ -52,8 +54,15 @@ class CodeRefactoringAgent:
                 return tool
         return None
 
+    def _estimate_tokens(self):
+        total_token_ct = 0
+        for message in self._history:
+            msg_tokens = ENCODER.encode(message.content)
+            total_token_ct += len(msg_tokens)
+        self._logger.info(f"Sending a estimated amount of tokens: {total_token_ct}")
+
     def run(self):
-        
+
         self._working_branch = "ReFAct-" + str(uuid.uuid4())
         git_checkout(self._working_branch, create=True)
 
@@ -64,6 +73,7 @@ class CodeRefactoringAgent:
             as the agent should terminate by calling the "stop" tool.
             """
 
+            self._estimate_tokens()
             response = self._model.invoke(self._history)
 
             try:
@@ -71,7 +81,8 @@ class CodeRefactoringAgent:
             except Exception:
                 msg = "Output could not be parsed. Make sure to respond in the correct format."
                 self._logger.warning(msg)
-                self._history.append(HumanMessage(content=msg + " " + parser.get_format_instructions()))
+                self._history.append(response)
+                self._history.append(HumanMessage(content=f"{msg} {parser.get_format_instructions()}"))
                 continue
 
             self._add_to_history(response)
@@ -81,7 +92,7 @@ class CodeRefactoringAgent:
             if tool is None:
                 msg = f"Tool {response.action} not found."
                 self._logger.warning(msg)
-                self._history.append(HumanMessage(content=msg))
+                self._history.append(HumanMessage(content=f"{msg} Available tools: {build_tool_info(self._tool_registry)}"))
                 continue
 
             try:

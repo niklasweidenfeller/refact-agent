@@ -3,3 +3,4 @@ generative-ai-hub-sdk==3.1.1
 generative-ai-hub-sdk[langchain-openai]==3.1.1
 langchain-core==0.3.6
 lizard==1.17.10
+tiktoken==0.8.0
