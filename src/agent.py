@@ -12,7 +12,7 @@ from tools.git_tools import git_checkout
 from tools.registry import register_tools
 from utils import prettify_list
 
-MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", 20))
+MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", 5))
 MAX_CONSECUTIVE_ERRORS = int(os.getenv("MAX_CONSECUTIVE_ERRORS", 3))
 CONTEXT_LIMIT = int(os.getenv("CONTEXT_LIMIT", 15_000))
 

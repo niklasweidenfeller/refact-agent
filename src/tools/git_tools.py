@@ -25,16 +25,20 @@ def git_checkout(branch: str, create: bool = False):
     else:
         subprocess.check_output(["git", "checkout", branch])
 
-def merge(from_branch: str, into_branch: str, squash: bool = True):
+def merge(from_branch: str, into_branch: str, squash: bool = True, commit_message: str = None):
     """ Merge a branch into another branch. """
     git_checkout(into_branch)
 
     if squash:
-        subprocess.check_output(["git", "merge", "--squash", from_branch])
+        args = ["git", "merge", "--squash", from_branch]
+        if commit_message:
+            args.extend(["-m", commit_message])
+        subprocess.check_output(args)
     else:
         subprocess.check_output(["git", "merge", from_branch])
 
-    commit(f"[ReFAct]: Merge {from_branch} into {into_branch}")
+    if not (squash and commit_message):
+        commit(f"[ReFAct]: Merge {from_branch} into {into_branch}")
 
 def get_current_branch() -> str:
     """Get the current branch name."""

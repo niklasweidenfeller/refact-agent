@@ -19,7 +19,8 @@ class ReActOutput(BaseModel):
         A list of all issues and code smells that you can find in the codebase. Pay attention for anti-patterns,
         code smells, and more. Also pay attention to the code quality and testability. Each issue should be broken
         down, when possible.
-        Explain why the issue is there and what the best way to address it is. Update this list as you go.
+        Explain why the issue is there and what the best way to address it is.
+        YOU MUST UPDATE THIS LIST AS YOU GO.
         """
     )
 
@@ -82,8 +83,6 @@ def get_system_message(tool_registry):
     
     IF YOU'RE STUCK, E.G. IF TESTS FAIL MULTIPLE TIMES IN A ROW, OR IF YOU NEED FURTHER INPUT,
     TRY A ALTERNATIVE APPROACH.
-    
-    ALWAYS RESPOND WITH THE ENTIRE FILE CONTENT, NOT JUST SNIPPETS.
 
     {format_instructions}
     """
