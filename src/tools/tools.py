@@ -1,6 +1,7 @@
 import os
 import subprocess
 import logging
+import shutil
 
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage
@@ -82,14 +83,12 @@ def get_tools(sample_project_path: str, source_code_dir: str):
             return False, "[ERROR] FAILURE"
 
         # clean the build directory
-        
-        bash_cmd = [f'cd {sample_project_path} && rf -rf target']
+        build_dir = os.path.join(sample_project_path, "target")
         try:
-            subprocess.run(bash_cmd)
-        except:
+            shutil.rmtree(build_dir)
+        except OSError as e:
             # the target directory might not exist yet
-            LOGGER.info("Target directory not found. Skipping deletion.")
-            pass
+            LOGGER.warning(f"Error: {e.filename} - {e.strerror}.")
 
         # compile the code
         bash_cmd = [f'cd {sample_project_path} && mvn compile']
@@ -166,7 +165,7 @@ def get_tools(sample_project_path: str, source_code_dir: str):
         with open(fullpath, "w") as f:
             f.write(content)
 
-        LOGGER.info(f"File {filepath} overwritten.")
+        LOGGER.info(f"File {filepath} overwritten. Beginning test execution.")
 
         success, text = execute_tests()
         if success:
