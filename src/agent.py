@@ -1,9 +1,12 @@
+""" Contains the Agent class containing the run method. """
+
 import json
 import logging
 import uuid
 import os
 
 from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.exceptions import OutputParserException
 import tiktoken
 
 from llm import get_gpt_llm
@@ -12,33 +15,36 @@ from tools.git_tools import git_checkout
 from tools.registry import register_tools
 from utils import prettify_list
 
-MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", 5))
-MAX_CONSECUTIVE_ERRORS = int(os.getenv("MAX_CONSECUTIVE_ERRORS", 3))
-CONTEXT_LIMIT = int(os.getenv("CONTEXT_LIMIT", 15_000))
+MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", "5"))
+MAX_CONSECUTIVE_ERRORS = int(os.getenv("MAX_CONSECUTIVE_ERRORS", "3"))
+CONTEXT_LIMIT = int(os.getenv("CONTEXT_LIMIT", "15_000"))
 
 ENCODER = tiktoken.encoding_for_model("gpt-4o")
 
 
 class CodeRefactoringAgent:
+    """ The Agent class containing the run method. """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, project, directory):
         self._logger = logging.getLogger("CodeRefactoringAgent")
+        self._working_branch = "ReFAct-" + str(uuid.uuid4())
 
         self._tool_registry = register_tools(project, directory)
         self._project = project
         self._history = [get_system_message(self._tool_registry)]
         self._model = get_gpt_llm()
 
-        self._logger.info(f"Initialized with project {project}")
-        
+        self._logger.info("Initialized with project %s.", project)
+
         self._consecutive_error_count = 0
 
     def _log_agent_message(self, response: ReActOutput):
         # self._logger.info("Plan:\n" + prettify_list(response.plan))
-        self._logger.info(f"Thought: {response.thought}")
-        self._logger.info(f"Action: {response.action}")
-        self._logger.info(f"Observation: {response.observation}")
-        self._logger.info(f"Issues:\n {prettify_list(response.issues)}")
+        self._logger.info("Thought: %s", response.thought)
+        self._logger.info("Action: %s", response.action)
+        self._logger.info("Observation: %s", response.observation)
+        self._logger.info("Issues:\n %s", prettify_list(response.issues))
 
     def _add_to_history(self, response: ReActOutput):
         # we don't want to store the full response in the history to keep the context window small
@@ -68,7 +74,9 @@ class CodeRefactoringAgent:
     def _clip_message_history(self, token_limit):
         current_token_ct = self._estimate_tokens()
         if current_token_ct <= token_limit:
-            self._logger.info(f"Current token count {current_token_ct} is below limit {token_limit}.")
+            self._logger.info("Current token count %s is below limit %s.",
+                              current_token_ct,
+                              token_limit)
             return
 
         all_messages = self._history.copy()
@@ -82,19 +90,19 @@ class CodeRefactoringAgent:
             else:
                 # message needs to be inserted after the first message
                 self._history.insert(1, most_recent_remaining_message)
-        self._logger.info(f"Clipped message history to {self._estimate_tokens()} tokens (limit: {token_limit}).")
+        self._logger.info("Clipped message history to %s tokens (limit: %s).",
+                          self._estimate_tokens(),
+                          token_limit)
 
     def run(self):
+        """ The main execution loop of the agent. """
 
-        self._working_branch = "ReFAct-" + str(uuid.uuid4())
         git_checkout(self._working_branch, create=True)
 
         num_commits = 0
         while num_commits < MAX_ITERATIONS:
-            """
-            Note: This loop does not have a termination condition,
-            as the agent should terminate by calling the "stop" tool.
-            """
+            # Note: This loop does not have a termination condition,
+            # as the agent should terminate by calling the "stop" tool.
 
             self._clip_message_history(token_limit=CONTEXT_LIMIT)
 
@@ -107,12 +115,14 @@ class CodeRefactoringAgent:
 
             try:
                 response = parser.parse(response.content)
-            except Exception:
+            except OutputParserException:
                 self._consecutive_error_count += 1
                 msg = "Output could not be parsed. Make sure to respond in the correct format."
                 self._logger.warning(msg)
                 self._history.append(response)
-                self._history.append(HumanMessage(content=f"{msg} {parser.get_format_instructions()}"))
+                self._history.append(
+                    HumanMessage(content=f"{msg} {parser.get_format_instructions()}")
+                )
                 continue
 
             self._add_to_history(response)
@@ -123,19 +133,24 @@ class CodeRefactoringAgent:
                 self._consecutive_error_count += 1
                 msg = f"Tool {response.action} not found."
                 self._logger.warning(msg)
-                self._history.append(HumanMessage(content=f"{msg} Available tools: {build_tool_info(self._tool_registry)}"))
+                tool_info = build_tool_info(self._tool_registry)
+                self._history.append(
+                    HumanMessage(content=f"{msg} Available tools: {tool_info}")
+                )
                 continue
 
             try:
                 tool_result = tool.invoke(response.tools_input)
-                self._logger.info(f"Tool {response.action} executed.")
-                self._history.append(HumanMessage(content=f"Tool {response.action} replies: {tool_result}"))
+                self._logger.info("Tool %s executed.", response.action)
+                self._history.append(
+                    HumanMessage(content=f"Tool {response.action} replies: {tool_result}")
+                )
 
                 # increase the count of successful commits
                 if response.action == "commit_changes":
                     num_commits += 1
 
-            except Exception as e:
+            except Exception as e: # pylint: disable=broad-exception-caught
                 self._consecutive_error_count += 1
                 msg = f"Tool {response.action} could not be executed: {str(e)}"
                 self._logger.warning(msg)

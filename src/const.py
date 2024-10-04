@@ -1,3 +1,5 @@
+""" This module contains some constants used in the project. """
+
 
 REFACTORINGS_FOWLER = """
 Change...

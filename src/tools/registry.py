@@ -1,21 +1,21 @@
-from . import tools
+""" This module registers all tools that are available in the system. """
+
+from .tools import ToolFactory
 
 def register_tools(repo_path, source_code_dir):
-    
-    tools_dict = tools.get_tools(repo_path, source_code_dir)
-    
+    """ Register all tools that are available in the system. """
+
+    tool_factory = ToolFactory(repo_path, source_code_dir)
+
     tool_registry = [
-        tools_dict['browse_files'],
-        tools_dict['open_file'],
-        # tools_dict['execute_tests'],
-        tools_dict['overwrite_file'],
-        tools_dict['overwrite_single_method'],
-        tools_dict['commit_changes'],
-        # tools_dict['undo_changes'],
-        tools_dict['stop'],
-        # tools_dict['ask_buddy'],
-        # tools_dict['get_refactoring_tipps'],
-        tools_dict['cyclomatic_complexity_tool']
+        tool_factory.get_open_file_tool(),
+        tool_factory.get_overwrite_file_tool(),
+        tool_factory.get_overwrite_single_method_tool(),
+        tool_factory.get_commit_changes_tool(),
+        tool_factory.get_stop_tool(),
+        # tool_factory.get_ask_buddy_tool(),
+        # tool_factory.get_get_refactoring_tipps_tool(),
+        tool_factory.get_cyclomatic_complexity_tool(),
     ]
 
     return tool_registry

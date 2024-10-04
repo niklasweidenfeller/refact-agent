@@ -1,9 +1,13 @@
-import os, logging, sys
+""" Main module of the application. """
+
+import os
+import logging
+import sys
 
 from dotenv import load_dotenv
-load_dotenv()
-
 from agent import CodeRefactoringAgent
+
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 

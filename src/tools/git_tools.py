@@ -1,3 +1,5 @@
+""" Utility functions for git operations. """
+
 import subprocess
 
 def has_file_changes(file_path: str) -> bool:

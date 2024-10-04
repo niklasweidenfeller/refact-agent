@@ -1,4 +1,7 @@
-import json, logging
+""" Contains everything related to the ReAct agent's System Prompt. """
+
+import json
+import logging
 from pydantic import BaseModel, Field
 
 from langchain_core.messages import SystemMessage
@@ -9,11 +12,12 @@ LOGGER = logging.getLogger("Tools")
 
 
 class ReActOutput(BaseModel):
+    """ Pydantic model for the ReAct agent's output. """
+
     thought: str = Field(description="Your current thought.")
     action: str = Field(description="The tool to use.")
     tools_input: dict = Field(description="The input to the action.")
     observation: str = Field(description="Your observation.")
-    # plan: list[str] = Field(description="Your long-term plan. Should be a list of steps. Consider, how you want the code to look like in the future.")
     issues: list[str] = Field(
         description="""
         A list of all issues and code smells that you can find in the codebase. Pay attention for anti-patterns,
@@ -27,6 +31,11 @@ class ReActOutput(BaseModel):
 parser = PydanticOutputParser(pydantic_object=ReActOutput)
 
 def build_tool_info(tool_registry):
+    """
+    Serialize the tool registry into a JSON string, which
+    can be passed to the LLM in the system message.
+    """
+
     tools_info = []
     for tool in tool_registry:
         tools_info.append({
@@ -38,7 +47,11 @@ def build_tool_info(tool_registry):
 
 
 
-def get_system_message(tool_registry):
+def get_system_message(tool_registry: dict) -> SystemMessage:
+    """
+    Constuct the system message for the ReAct agent, relative
+    to the tool registry.
+    """
 
     tool_info = build_tool_info(tool_registry)
     format_instructions = parser.get_format_instructions()

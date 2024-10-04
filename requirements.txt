@@ -1,4 +1,6 @@
-langchain-ollama==0.2.0
-generative-ai-hub-sdk==1.11.1
-lizard==1.17.10
-tiktoken== 0.8.0
+generative-ai-hub-sdk[all]
+langchain
+langchain-ollama
+lizard
+tiktoken
+python-dotenv
