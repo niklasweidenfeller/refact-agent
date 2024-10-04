@@ -4,7 +4,9 @@ java-gilded-rose:
 	python src/main.py samples/java_gilded_rose .
 java-yahtzee:
 	python src/main.py samples/java_yahtzee .
-java: java-tennis java-gilded-rose java-yahtzee
+java-tabula:
+	python src/main.py samples/java_tabula src/main/java
+java: java-tennis java-gilded-rose java-yahtzee java-tabula
 
 python-tennis:
 	python src/main.py samples/py_tennis .
