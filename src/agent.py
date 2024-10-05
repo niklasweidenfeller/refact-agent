@@ -5,7 +5,7 @@ import logging
 import uuid
 import os
 
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.exceptions import OutputParserException
 import tiktoken
 
@@ -94,57 +94,91 @@ class CodeRefactoringAgent:
                           self._estimate_tokens(),
                           token_limit)
 
+    def _append_to_log_file(self, message: BaseMessage):
+        # check if the log file exists
+        log_file = f"{self._working_branch}.json"
+        if not os.path.exists(log_file):
+            self._logger.info("Creating new log file %s.", log_file)
+            with open(log_file, "w", encoding="utf-8") as file:
+                file.write("[]")
+
+        # read current log file
+        with open(log_file, "r", encoding="utf-8") as file:
+            log = json.load(file)
+
+        # append new message
+        try:
+            log.append(json.loads(message.content))
+        except json.JSONDecodeError:
+            log.append(message.content)
+
+        # write back to log file
+        with open(log_file, "w", encoding="utf-8") as file:
+            json.dump(log, file, indent=4)
+
+    def _add_to_history_and_log(self, message: BaseMessage):
+        """ Add a message to the history and log it to the log file. """
+        self._history.append(message)
+        self._append_to_log_file(message)
+
     def run(self):
         """ The main execution loop of the agent. """
 
+        system_message = get_system_message(self._tool_registry)
         git_checkout(self._working_branch, create=True)
+        self._append_to_log_file(system_message)
 
         num_commits = 0
         while num_commits < MAX_ITERATIONS:
             # Note: This loop does not have a termination condition,
             # as the agent should terminate by calling the "stop" tool.
-
             self._clip_message_history(token_limit=CONTEXT_LIMIT)
 
 
             # if the agent seems stuck, we'll try to reset the state
             if self._consecutive_error_count >= MAX_CONSECUTIVE_ERRORS:
                 self._consecutive_error_count = 0
-                self._history = [get_system_message(self._tool_registry)]
+                self._history = [system_message]
             response = self._model.invoke(self._history)
+            self._add_to_history_and_log(response)
 
             try:
                 response = parser.parse(response.content)
             except OutputParserException:
                 self._consecutive_error_count += 1
-                msg = "Output could not be parsed. Make sure to respond in the correct format."
+                msg = {
+                    "error": "Could not parse the response.",
+                    "format_instructions": parser.get_format_instructions()
+                }
                 self._logger.warning(msg)
-                self._history.append(response)
-                self._history.append(
-                    HumanMessage(content=f"{msg} {parser.get_format_instructions()}")
-                )
+                next_message = HumanMessage(content=json.dumps(msg, indent=4))
+                self._add_to_history_and_log(next_message)
                 continue
 
-            self._add_to_history(response)
             self._log_agent_message(response)
 
             tool = self._get_tool_by_name(response.action)
             if tool is None:
                 self._consecutive_error_count += 1
-                msg = f"Tool {response.action} not found."
+                msg = {
+                    "error": f"Tool {response.action} not found.",
+                    "available_tools": build_tool_info(self._tool_registry)
+                }
                 self._logger.warning(msg)
-                tool_info = build_tool_info(self._tool_registry)
-                self._history.append(
-                    HumanMessage(content=f"{msg} Available tools: {tool_info}")
-                )
+                next_message = HumanMessage(content=json.dumps(msg, indent=4))
+                self._add_to_history_and_log(next_message)
                 continue
 
             try:
                 tool_result = tool.invoke(response.tools_input)
-                self._logger.info("Tool %s executed.", response.action)
-                self._history.append(
-                    HumanMessage(content=f"Tool {response.action} replies: {tool_result}")
-                )
+                msg = {
+                    "tool": response.action,
+                    "result": tool_result
+                }
+                self._logger.info(msg)
+
+                next_message = HumanMessage(content=json.dumps(msg, indent=4))
+                self._add_to_history_and_log(next_message)
 
                 # increase the count of successful commits
                 if response.action == "commit_changes":
@@ -152,9 +186,13 @@ class CodeRefactoringAgent:
 
             except Exception as e: # pylint: disable=broad-exception-caught
                 self._consecutive_error_count += 1
-                msg = f"Tool {response.action} could not be executed: {str(e)}"
+                msg = {
+                    "tool": response.action,
+                    "error": str(e)
+                }
                 self._logger.warning(msg)
-                self._history.append(HumanMessage(content=msg))
+                next_message = HumanMessage(content=json.dumps(msg, indent=4))
+                self._add_to_history_and_log(next_message)
 
             print("========================================")
 
