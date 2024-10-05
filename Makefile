@@ -18,7 +18,9 @@ javascript-gilded-rose:
 	python src/main.py samples/js_gilded_rose src
 javascript-json-parser:
 	python src/main.py samples/js_json_object src
-javascript: javascript-gilded-rose javascript-json-parser
+javascript-trivia:
+	python src/main.py samples/js_trivia .
+javascript: javascript-gilded-rose javascript-json-parser javascript-trivia
 
 
 all: java python javascript
