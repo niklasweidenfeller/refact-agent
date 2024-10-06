@@ -8,6 +8,7 @@ def register_tools(repo_path, source_code_dir):
     tool_factory = ToolFactory(repo_path, source_code_dir)
 
     tool_registry = [
+        tool_factory.get_browse_files_tool(),
         tool_factory.get_open_file_tool(),
         tool_factory.get_overwrite_file_tool(),
         tool_factory.get_overwrite_single_method_tool(),
