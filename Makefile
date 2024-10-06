@@ -19,7 +19,7 @@ javascript-gilded-rose:
 javascript-json-parser:
 	python src/main.py samples/js_json_object src
 javascript-trivia:
-	python src/main.py samples/js_trivia .
+	python src/main.py samples/js_trivia src
 javascript: javascript-gilded-rose javascript-json-parser javascript-trivia
 
 

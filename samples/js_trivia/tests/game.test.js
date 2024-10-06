@@ -1,4 +1,4 @@
-const { Game } = require('./game.js');
+const { Game } = require('../src/game.js');
 
 describe("Game Test", function () {
     it("should print the player number to console", function () {
