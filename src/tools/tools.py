@@ -195,9 +195,8 @@ class ToolFactory:
             LOGGER.info("Stopping refactoring. Merging from %s into %s.",
                         current_branch,
                         target_branch)
-            git_tools.merge(git_tools.get_current_branch(),
-                            target_branch, squash=True,
-                            commit_message=changes_summary)
+            git_tools.merge(current_branch, target_branch, squash=True)
+            git_tools.commit(f"[ReFAct]: {changes_summary}")
             sys.exit(0)
 
         return stop
@@ -240,7 +239,10 @@ class ToolFactory:
             Usually, a cyclomatic complexity of 15 or higher is considered bad code.
             """
 
-            lizard_result_file_list = list(lizard.analyze([self._sample_project_path]))
+            lizard_result_file_list = list(lizard.analyze([
+                os.path.join(self._sample_project_path,
+                             self._source_code_dir)
+            ]))
             lizard_result_functions = []
             for file in lizard_result_file_list:
                 lizard_result_functions.extend(x.__dict__ for x in file.function_list)
