@@ -115,12 +115,19 @@ class ToolFactory:
             This tool is useful, if the file is very large and you only want to change a specific
             method.
             (Includes splitting the method into multiple methods.)
+            
+            CURRENTLY WORKS ONLY FOR CURLY BRACE LANGUAGES (Java, C, C++, JavaScript, TypeScript).
 
             After you have executed this tool and commited your changes, you MUST check the code
             complexity again!
             """
 
             filepath = filepath.lstrip("/")
+            if not is_curly_brace_language(filepath):
+                return warning(
+                    "Language not supported. Please use the overwrite_file tool."
+                )
+
             with open(self._get_full_path(filepath), "r", encoding="utf-8") as f:
                 content_lines_from_disk = f.readlines()
 
@@ -133,11 +140,6 @@ class ToolFactory:
 
             if not original_start_line:
                 return warning(f"Method {method_name} not found in file {filepath}.")
-
-            if not is_curly_brace_language(filepath):
-                return warning(
-                    "Language not supported. Please use the overwrite_file tool."
-                )
 
             # we need to update the start and end line numbers
             start = content_lines_from_disk.index(original_start_line)
