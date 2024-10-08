@@ -18,6 +18,7 @@ from utils import prettify_list
 MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", "5"))
 MAX_CONSECUTIVE_ERRORS = int(os.getenv("MAX_CONSECUTIVE_ERRORS", "3"))
 CONTEXT_LIMIT = int(os.getenv("CONTEXT_LIMIT", "15_000"))
+LOG_FILE_DIR = "logs"
 
 ENCODER = tiktoken.encoding_for_model("gpt-4o")
 
@@ -96,10 +97,13 @@ class CodeRefactoringAgent:
 
     def _append_to_log_file(self, message: BaseMessage):
         # check if the log file exists
-        log_file = f"{self._working_branch}.json"
+        if not os.path.exists(LOG_FILE_DIR):
+            os.makedirs(LOG_FILE_DIR)
+
+        log_file = os.path.join(LOG_FILE_DIR, f"{self._working_branch}.json")
         if not os.path.exists(log_file):
             self._logger.info("Creating new log file %s.", log_file)
-            with open(log_file, "w", encoding="utf-8") as file:
+            with open(os.path.join(LOG_FILE_DIR, log_file), "w", encoding="utf-8") as file:
                 file.write("[]")
 
         # read current log file
