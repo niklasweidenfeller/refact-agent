@@ -10,11 +10,17 @@ from gen_ai_hub.proxy.core.proxy_clients import get_proxy_client
 
 def get_ollama_llm() -> BaseLLM:
     """ Return a OllamaLLM instance """
-    return OllamaLLM(model="llama3.1", temperature=0)
+    model = OllamaLLM(model="llama3.1", temperature=0)
+    model.name = "ollama llama3.1"
+    return model
 
 
 def get_gpt_llm() -> BaseLLM:
     """ Get a SAP Gen AI Hub LLM instance """
     proxy_client = get_proxy_client('gen-ai-hub')
-    return ChatOpenAI(deployment_id=os.getenv("DEPLOYMENT_ID"),
+    model = ChatOpenAI(deployment_id=os.getenv("DEPLOYMENT_ID"),
                       proxy_client=proxy_client, temperature=0.0)
+    model.name = "gpt-4o"
+    return model
+
+get_llm = get_gpt_llm #get_ollama_llm

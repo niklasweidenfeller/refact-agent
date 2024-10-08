@@ -117,9 +117,6 @@ class ToolFactory:
             (Includes splitting the method into multiple methods.)
             
             CURRENTLY WORKS ONLY FOR CURLY BRACE LANGUAGES (Java, C, C++, JavaScript, TypeScript).
-
-            After you have executed this tool and commited your changes, you MUST check the code
-            complexity again!
             """
 
             filepath = filepath.lstrip("/")

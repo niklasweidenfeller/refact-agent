@@ -6,6 +6,7 @@ import sys
 
 from dotenv import load_dotenv
 from agent import CodeRefactoringAgent
+from config import check_all_settings_implemented
 
 load_dotenv()
 
@@ -13,6 +14,13 @@ logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
+
+    try:
+        check_all_settings_implemented()
+    except NotImplementedError as e:
+        logger.error(e)
+        sys.exit(1)
+
     logger.info("Application started.")
 
     # the application that we want to refactor is passed as an command line argument
