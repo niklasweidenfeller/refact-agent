@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from langchain_core.messages import SystemMessage
 from langchain.output_parsers import PydanticOutputParser
 
-from config import get_settings
+from .config import get_settings
 
 
 LOGGER = logging.getLogger("Tools")
@@ -23,6 +23,12 @@ class ReActOutput(BaseModel):
 
 
 class PlanReActOutput(ReActOutput):
+    """
+    Pydantic model which adds a plan to ReAct.
+    Used for PlanReAct, which is a version of ReAct
+    where the agent makes a plan before taking action.
+    """
+
     issues: list[str] = Field(
         description=f"""
         A list of all issues and code smells that you can find in the codebase. Pay attention for anti-patterns,
@@ -31,9 +37,11 @@ class PlanReActOutput(ReActOutput):
         Explain why the issue is there and what the best way to address it is.
         {"YOU MUST UPDATE THIS LIST AS YOU GO." if get_settings()["dynamic_plan"] else ""}
         """
-    ) 
+    )
 
-parser = PydanticOutputParser(pydantic_object=PlanReActOutput if get_settings()["make_plan"] else ReActOutput)
+parser = PydanticOutputParser(
+    pydantic_object=PlanReActOutput if get_settings()["make_plan"] else ReActOutput
+)
 
 def build_tool_info(tool_registry):
     """
@@ -77,8 +85,10 @@ def get_system_message(tool_registry: dict) -> SystemMessage:
     of the available techniques, which you'll apply to the specific issue.
     """ if get_settings()["use_refactoring_tricks"] else ""
 
-    update_issues_list_str = "YOU MUST UPDATE THIS LIST AS YOU GO." if get_settings()["make_incremental_changes"] else ""
-    
+    update_issues_list_str = (
+        "YOU MUST UPDATE THIS LIST AS YOU GO." if get_settings()["make_incremental_changes"] else ""
+    )
+
     make_plan_string = f"""
     Your task is to make a precise list of issues in the codebase.
     {update_issues_list_str}

@@ -10,18 +10,18 @@ from langchain_core.exceptions import OutputParserException
 from langchain_openai.chat_models.base import BaseChatOpenAI
 import tiktoken
 
-from config import get_settings
-from llm import get_llm
-from prompts import PlanReActOutput, get_system_message, ReActOutput, parser, build_tool_info
-from tools.git_tools import git_checkout
-from tools.registry import register_tools
-from utils import prettify_list
+from .config import get_settings
+from .llm import get_llm
+from .prompts import PlanReActOutput, get_system_message, ReActOutput, parser, build_tool_info
+from .tools.git_tools import git_checkout
+from .tools.registry import register_tools
+from .utils import prettify_list
 
 HARD_MAX_ITERATIONS = 20
 
 MAX_NUM_OF_COMMITS = int(os.getenv("MAX_ITERATIONS", "5"))
 MAX_CONSECUTIVE_ERRORS = int(os.getenv("MAX_CONSECUTIVE_ERRORS", "3"))
-CONTEXT_LIMIT = int(os.getenv("CONTEXT_LIMIT", "15_000"))
+CONTEXT_LIMIT = int(os.getenv("CONTEXT_LIMIT", "8192"))
 LOG_FILE_DIR = "logs"
 
 ENCODER = tiktoken.encoding_for_model("gpt-4o")
@@ -79,11 +79,14 @@ class CodeRefactoringAgent:
         return total_token_ct
 
     def _clip_message_history(self, token_limit):
+        if not get_settings()['clip_context_window']:
+            return
+
         current_token_ct = self._estimate_tokens()
         if current_token_ct <= token_limit:
             self._logger.info("Current token count %s is below limit %s.",
-                              current_token_ct,
-                              token_limit)
+                            current_token_ct,
+                            token_limit)
             return
 
         all_messages = self._history.copy()
@@ -137,10 +140,20 @@ class CodeRefactoringAgent:
         self._history.append(message)
         self._append_to_log_file(message)
 
+    def _trace_exit(self, num_commits, num_iterations):
+        if num_commits >= MAX_NUM_OF_COMMITS:
+            self._logger.info(
+                "Maximum number of commits reached without calling the 'stop' tool. Terminating."
+            )
+        elif num_iterations >= HARD_MAX_ITERATIONS:
+            self._logger.info(
+                "Maximum number of iterations reached. Terminating."
+            )
+
     def build_loaded_prompt(self, history):
         """ Condense the history to a single string. """
         condensed_history = []
-        
+
         # get all but the very last message
         for i, msg in enumerate(history[1:-1]):
             if isinstance(msg, AIMessage):
@@ -153,7 +166,7 @@ class CodeRefactoringAgent:
                 condensed_history.append(f"{i}): {msg.content}")
 
         past_log = "\n - ".join(condensed_history)
-    
+
         return f"""
         {get_system_message(self._tool_registry)}
 
@@ -164,6 +177,23 @@ class CodeRefactoringAgent:
         {past_log}
         """
 
+    def _clear_erroneous_history(self):
+        if not get_settings()['clear_error_after_n']:
+            return
+        if self._consecutive_error_count >= MAX_CONSECUTIVE_ERRORS:
+            self._consecutive_error_count = 0
+            self._history = [get_system_message(self._tool_registry)]
+
+    def _invoke_model(self, history):
+        if issubclass(self._model.__class__, BaseChatOpenAI):
+            response = self._model.invoke(history)
+        else:
+            loaded_prompt = self.build_loaded_prompt(history)
+            response = self._model.invoke(loaded_prompt)
+
+        response = ensure_langchain_message_format(response)
+        return response
+
     def run(self):
         """ The main execution loop of the agent. """
 
@@ -171,27 +201,17 @@ class CodeRefactoringAgent:
         git_checkout(self._working_branch, create=True)
         self._append_to_log_file(system_message)
 
-        num_commits = 0
-        num_iterations = 0
+        num_commits, num_iterations = 0, 0
         while num_commits < MAX_NUM_OF_COMMITS and num_iterations < HARD_MAX_ITERATIONS:
             num_iterations += 1
             # Note: This loop does not have a termination condition,
             # as the agent should terminate by calling the "stop" tool.
-            if get_settings()['clip_context_window']:
-                self._clip_message_history(token_limit=CONTEXT_LIMIT)
+            self._clip_message_history(token_limit=CONTEXT_LIMIT)
 
             # if the agent seems stuck, we'll try to reset the state
-            if get_settings()['clear_error_after_n']:
-                if self._consecutive_error_count >= MAX_CONSECUTIVE_ERRORS:
-                    self._consecutive_error_count = 0
-                    self._history = [system_message]
-            if issubclass(self._model.__class__, BaseChatOpenAI):
-                response = self._model.invoke(self._history)
-            else:
-                loaded_prompt = self.build_loaded_prompt(self._history)
-                response = self._model.invoke(loaded_prompt)
-            if isinstance(response, str):
-                response = AIMessage(content=response)
+            self._clear_erroneous_history()
+
+            response = self._invoke_model(self._history)
             self._add_to_history_and_log(response)
 
             try:
@@ -250,11 +270,11 @@ class CodeRefactoringAgent:
 
             print("========================================")
 
-        if num_commits >= MAX_NUM_OF_COMMITS:
-            self._logger.info(
-                "Maximum number of commits reached without calling the 'stop' tool. Terminating."
-            )
-        elif num_iterations >= HARD_MAX_ITERATIONS:
-            self._logger.info(
-                "Maximum number of iterations reached. Terminating."
-            )
+        self._trace_exit(num_commits, num_iterations)
+
+def ensure_langchain_message_format(message: str | BaseMessage) -> BaseMessage:
+    """ Ensure that the message is in the correct format. """
+
+    if isinstance(message, str):
+        return AIMessage(content=message)
+    return message

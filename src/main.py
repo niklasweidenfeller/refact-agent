@@ -5,8 +5,8 @@ import logging
 import sys
 
 from dotenv import load_dotenv
-from agent import CodeRefactoringAgent
-from config import check_all_settings_implemented
+from .agent import CodeRefactoringAgent
+from .config import check_all_settings_implemented
 
 load_dotenv()
 
