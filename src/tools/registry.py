@@ -23,6 +23,6 @@ def register_tools(repo_path, source_code_dir):
     if get_settings()["get_buddy_feedback"]:
         tool_registry.append(tool_factory.get_ask_buddy_tool())
     if get_settings()['use_refactoring_tricks']:
-        tool_registry.append(tool_factory.get_get_refactoring_tipps_tool())
+        tool_registry.append(tool_factory.get_refactoring_tipps_tool())
 
     return tool_registry
