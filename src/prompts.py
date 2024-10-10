@@ -18,7 +18,7 @@ class ReActOutput(BaseModel):
 
     thought: str = Field(description="Your current thought.")
     action: str = Field(description="The tool to use.")
-    tools_input: dict = Field(description="The input to the action.")
+    tools_input: dict = Field(description="The input to the tool.")
     observation: str = Field(description="Your observation.")
 
 
@@ -114,7 +114,7 @@ def get_system_message(tool_registry: dict) -> SystemMessage:
     {"FOCUS ON ONE ISSUE AT A TIME. BREAK EVERYTHING DOWN INTO SMALL STEPS." if get_settings()['make_incremental_changes'] else ""}
 
     {"ONCE YOU ARE DONE WITH THE LIST OF ISSUES, TRY TO RE-CHECK THE CODEBASE FOR ANY ADDITIONAL ISSUES." if get_settings()["make_plan"] else ""}
-    IF YOU CAN'T FIND ANY, YOU CAN STOP.
+    IF YOU CAN'T FIND FURTHER ISSUES, YOU CAN STOP.
 
     IF YOU'RE STUCK, E.G. IF TESTS FAIL MULTIPLE TIMES IN A ROW, OR IF YOU NEED FURTHER INPUT,
     {"ASK YOUR BUDDY FOR HELP." if get_settings()["get_buddy_feedback"] else "TRY AN ALTERNATIVE APPROACH."}
