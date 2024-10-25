@@ -4,3 +4,5 @@ langchain-ollama
 lizard
 tiktoken
 python-dotenv
+sentence-transformers
+wordcloud

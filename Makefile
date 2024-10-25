@@ -22,5 +22,7 @@ javascript-trivia:
 	python src/main.py samples/js_trivia src
 javascript: javascript-gilded-rose javascript-json-parser javascript-trivia
 
+reset:
+	git checkout main
 
-all: java python javascript
+all: java python javascript reset
