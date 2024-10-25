@@ -1,3 +1,5 @@
+""" Configuration file for the project. """
+
 
 SETTINGS = {
     "consider_cyclomatic_complexity": False,
@@ -13,6 +15,7 @@ SETTINGS = {
 }
 
 def get_settings():
+    """ Get the settings for the project. """
     return SETTINGS.copy()
 
 IMPLEMENTED_SETTINGS = [
@@ -28,11 +31,16 @@ IMPLEMENTED_SETTINGS = [
     "dynamic_plan",
 ]
 
-def check_all_settings_implemented(settings = get_settings(), implemented_settings = IMPLEMENTED_SETTINGS):
+def check_all_settings_implemented():
+    """
+    Check if all settings are implemented by
+    comparing the settings to the implemented settings.
+    """
+
     missing_settings = []
-    for setting in settings:
-        if setting not in implemented_settings:
+    for setting in get_settings():
+        if setting not in IMPLEMENTED_SETTINGS:
             missing_settings.append(setting)
-    
+
     if len(missing_settings) > 0:
         raise NotImplementedError(f"Setting {', '.join(missing_settings)} is not implemented.")

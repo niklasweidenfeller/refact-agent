@@ -10,8 +10,8 @@ import lizard
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage
 
-from const import REFACTORINGS_FOWLER
-from llm import get_gpt_llm
+from ..const import REFACTORINGS_FOWLER
+from ..llm import get_gpt_llm
 
 from . import git_tools
 from .internals import get_all_code_files
