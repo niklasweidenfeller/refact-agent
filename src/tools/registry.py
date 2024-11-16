@@ -8,6 +8,7 @@ def register_tools(repo_path, source_code_dir):
 
     tool_factory = ToolFactory(repo_path, source_code_dir)
 
+    # register the default tools
     tool_registry = [
         tool_factory.get_browse_files_tool(),
         tool_factory.get_open_file_tool(),
@@ -16,13 +17,24 @@ def register_tools(repo_path, source_code_dir):
         tool_factory.get_stop_tool(),
     ]
 
-    if get_settings()["modify_specific_method"]:
-        tool_registry.append(tool_factory.get_overwrite_single_method_tool())
-    if get_settings()["consider_cyclomatic_complexity"]:
-        tool_registry.append(tool_factory.get_cyclomatic_complexity_tool())
-    if get_settings()["get_buddy_feedback"]:
-        tool_registry.append(tool_factory.get_ask_buddy_tool())
-    if get_settings()['use_refactoring_tricks']:
-        tool_registry.append(tool_factory.get_refactoring_tipps_tool())
+    # register special tools depending on the settings
+    iteration_agent_settings = get_settings()
+
+    if iteration_agent_settings["modify_specific_method"]:
+        tool_registry.append(
+            tool_factory.get_overwrite_single_method_tool()
+        )
+    if iteration_agent_settings["consider_cyclomatic_complexity"]:
+        tool_registry.append(
+            tool_factory.get_cyclomatic_complexity_tool()
+        )
+    if iteration_agent_settings["get_buddy_feedback"]:
+        tool_registry.append(
+            tool_factory.get_ask_buddy_tool()
+        )
+    if iteration_agent_settings['use_refactoring_tricks']:
+        tool_registry.append(
+            tool_factory.get_refactoring_tipps_tool()
+        )
 
     return tool_registry

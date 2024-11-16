@@ -19,7 +19,7 @@ from .utils import prettify_list
 
 HARD_MAX_ITERATIONS = 20
 
-MAX_NUM_OF_COMMITS = int(os.getenv("MAX_ITERATIONS", "5"))
+MAX_NUM_OF_COMMITS = int(os.getenv("MAX_NUM_OF_COMMITS", "5"))
 MAX_CONSECUTIVE_ERRORS = int(os.getenv("MAX_CONSECUTIVE_ERRORS", "3"))
 CONTEXT_LIMIT = int(os.getenv("CONTEXT_LIMIT", "8192"))
 LOG_FILE_DIR = "logs"

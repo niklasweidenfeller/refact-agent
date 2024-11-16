@@ -30,6 +30,8 @@ def node_js_test_runner(sample_project_path) -> tuple[bool, str]:
 
 def python_test_runner(sample_project_path) -> tuple[bool, str]:
     """ Run the test cases for a Python project. """
+
+    # sed command is used to remove the color codes from the pytest output
     bash_cmd = [f"cd {sample_project_path} && pytest | sed -e 's/\x1b\[[0-9;]*m//g'"] # pylint: disable=anomalous-backslash-in-string
     with subprocess.Popen(
         bash_cmd,
